@@ -4,45 +4,68 @@ package view;
 import bean.ProductBean;
 import bean.UserBean;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.List;
 import java.util.Scanner;
 
 public class InventoryView {
     private Scanner scanner;
 
-    public InventoryView() {
-        scanner = new Scanner(System.in);
+    private BufferedReader in;
+    private PrintWriter out;
+
+    public InventoryView(BufferedReader in, PrintWriter out) {
+        this.in = in;
+        this.out = out;
     }
 
+//    public InventoryView() {
+//        scanner = new Scanner(System.in);
+//    }
+
     public void displayMenu() {
-        System.out.println("0 for List all users\n1 For Signup\n2 For Login\n3 For exit\nEnter your choice");
+        out.println("1 For Signup\n2 For Login\n3 For exit");
     }
 
     public void displayProducts(List<ProductBean> products) {
-        System.out.println("*********** Product List ******************");
-        System.out.println("ProductId ---- Name ---- price-----");
+        out.println("*********** Product List ******************");
+        out.println("ProductId ---- Name ---- price-----");
         for (ProductBean product : products) {
-            System.out.println(product.getProductId() + "\t\t" + product.getProductName() + "\t\t" + product.getPrice());
+            out.println(product.getProductId() + "\t\t" + product.getProductName() + "\t\t" + product.getPrice());
         }
     }
-
     public void displayUsers(List<UserBean> users) {
         for (UserBean user : users) {
-            System.out.println(user.getFirstName());
+            out.println(user.getFirstName());
         }
     }
 
     public String getUserInput(String prompt) {
-        System.out.print(prompt);
-        return scanner.nextLine();
+        try {
+            out.println(prompt);
+            return in.readLine();
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 
     public int getUserIntInput(String prompt) {
-        System.out.print(prompt);
-        return scanner.nextInt();
+        try {
+            out.println(prompt);
+            return Integer.parseInt(in.readLine());
+        } catch (NumberFormatException e) {
+            out.println("Invalid input. Please enter an integer.");
+            return getUserIntInput(prompt);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return -1;
+        }
     }
 
     public void displayMessage(String message) {
-        System.out.println(message);
+        out.println(message);
     }
 }
