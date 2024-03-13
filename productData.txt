@@ -1,0 +1,11 @@
+6092,iPhone,100000
+1470,LED TV,55000
+3528,Monitor,5000
+4773,Mouse,400
+1670,Keyboard,1000
+4045,USB Cable,100
+6640,Airpods,17000
+6627,Speaker,1000
+6712,HP Laptop,60000
+3530,Graphics Card,4500
+1718,Water bottle,250

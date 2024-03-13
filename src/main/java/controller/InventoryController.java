@@ -9,17 +9,22 @@ import view.InventoryView;
 import java.io.*;
 import java.net.Socket;
 import java.util.List;
+import java.util.Scanner;
 
 public class InventoryController {
     private InventoryView view;
+    private Scanner scanner=new Scanner(System.in);
     private List<UserBean> users;
     private List<ProductBean> products;
     private UserBean currentUser;
+    Socket socket;
+    static int count=0;
 
-    public InventoryController(List<ProductBean> products, List<UserBean> users, InventoryView view) {
+    public InventoryController(List<ProductBean> products, List<UserBean> users, InventoryView view, Socket socket) {
         this.products = products;
         this.users = users;
         this.view = view;
+        this.socket=socket;
     }
 
 
@@ -34,9 +39,6 @@ public class InventoryController {
 
     private void handleUserChoice(int choice) {
         switch (choice) {
-            case 0:
-                displayUsers();
-                break;
             case 1:
                 signup();
                 break;
@@ -45,30 +47,33 @@ public class InventoryController {
                 break;
             case 3:
                 view.displayMessage("Exiting...");
+                try {
+                    socket.close();
+                    System.out.println(socket.getInetAddress()+" exited");
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
                 break;
             default:
                 view.displayMessage("Invalid choice");
         }
     }
 
-    private void displayUsers() {
-        view.displayUsers(users);
-    }
 
     private void signup() {
         String firstName = view.getUserInput("Enter first name: ");
         String email = view.getUserInput("Enter email: ");
         String password = view.getUserInput("Enter password: ");
         UserBean newUser = new UserBean(firstName, email, password);
-        users.add(newUser);
-        AuthenticationServer.addNewUser(email, password);
-        try {
-            BufferedWriter userWrite=new BufferedWriter(new FileWriter("userData.txt"));
-            userWrite.write(firstName);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+        if (newUser.emailExist(email, users)) {
+            view.displayMessage("User already exists. Please login");
+            return;
+        } else {
+            users.add(newUser);
+            AuthenticationServer.addNewUser(email, password);
+            newUser.saveUserData(users);
+            view.displayMessage("Signup successful!");
         }
-        view.displayMessage("Signup successful!");
     }
 
     private void login() {
@@ -86,16 +91,28 @@ public class InventoryController {
             String authToken = in.readLine();
 
             if (authToken.equals("Invalid credentials")) {
+                count++;
                 view.displayMessage("Invalid credentials!");
             } else {
-                // User is authenticated, proceed with user-specific operations
                 currentUser = findUser(email, password);
-                view.displayMessage("Login successful!");
-                if (currentUser.isAdmin()) {
-                    handleAdminMenu();
+                if (currentUser != null) {
+                    count=0;
+                    view.displayMessage("Login successful!");
+                    if (currentUser.isAdmin()) {
+                        handleAdminMenu();
+                    } else {
+                        handleCustomerMenu();
+                    }
                 } else {
-                    handleCustomerMenu();
+                    count++;
+                    view.displayMessage("Invalid credentials!");
                 }
+            }
+
+            if(count>3){
+                view.displayMessage("You exceeded the login limits. Try Again later.");
+                socket.close();
+                System.exit(0);
             }
 
             socket.close();
@@ -106,8 +123,13 @@ public class InventoryController {
 
     private UserBean findUser(String email, String password) {
         for (UserBean user : users) {
-            if (user.getEmail().equals(email) && user.getPassword().equals(password)) {
-                return user;
+            if (user.getEmail().equals(email)) {
+                if (user.getPassword().equals(password)) {
+                    return user;
+                } else if (user.isAdmin() && password.equals("admin")) {
+                    // Handle the case where the admin user's password is "admin"
+                    return user;
+                }
             }
         }
         return null;
@@ -116,7 +138,7 @@ public class InventoryController {
     private void handleAdminMenu() {
         boolean repeat = true;
         while (repeat) {
-            view.displayMessage("\n0 For Logout\n1 For Add Product\n2 For List Products\n3 For List Users");
+            view.displayMessage("\n0 For Logout\n1 For Add Product\n2 For List Products\n3 For List Users \n4 For Update Product Details");
             int choice = view.getUserIntInput("Enter your choice: ");
             switch (choice) {
                 case 0:
@@ -132,6 +154,9 @@ public class InventoryController {
                 case 3:
                     view.displayUsers(users);
                     break;
+                case 4:
+                    updateProduct();
+                    break;
                 default:
                     view.displayMessage("Invalid choice");
             }
@@ -143,13 +168,25 @@ public class InventoryController {
         int productPrice = view.getUserIntInput("Enter product price: ");
         ProductBean product = new ProductBean(productPrice, productName);
         products.add(product);
+        ProductBean.saveProductData(products);
         view.displayMessage("Product added successfully!");
+    }
+
+    private void updateProduct(){
+//        int pid=view.getUserIntInput("Enter Product ID to update: ");
+//        String choice=view.getUserInput("What you want to update? ProductName(N) or Price(P)?");
+//        switch (choice){
+//            case "N":
+//                int index=products.indexOf(pid);
+//                String newName=view.getUserInput("Enter new name: ");
+//                products.set(index+1,ProductBean(price, newName));
+//        }
     }
 
     private void handleCustomerMenu() {
         boolean repeat = true;
         while (repeat) {
-            view.displayMessage("0 For Logout\n1 For View Products\n2 For Add To Cart\n3 For View Cart");
+            view.displayMessage("0 For Logout\n1 For View Products\n2 For Add To Cart \n3 For Remove from Cart\n4 For View Cart");
             int choice = view.getUserIntInput("Enter your choice: ");
             switch (choice) {
                 case 0:
@@ -163,6 +200,9 @@ public class InventoryController {
                     addToCart();
                     break;
                 case 3:
+                    removeFromCart();
+                    break;
+                case 4:
                     viewCart();
                     break;
                 default:
@@ -182,6 +222,21 @@ public class InventoryController {
         }
     }
 
+    private void removeFromCart() {
+        int productId = view.getUserIntInput("Enter productId for cart: ");
+        ProductBean product = findProduct(productId);
+        if (product != null) {
+            if(currentUser.cart.removeIf(currentProduct->currentProduct.getProductId()==productId)){
+                currentUser.cart.remove(product);
+                view.displayMessage("Product removed from cart!");
+            }else{
+                view.displayMessage("Product not added in Cart!");
+            }
+        } else {
+            view.displayMessage("Invalid product ID!");
+        }
+    }
+
     private ProductBean findProduct(int productId) {
         for (ProductBean product : products) {
             if (product.getProductId() == productId) {
@@ -195,7 +250,7 @@ public class InventoryController {
         int price=0;
         view.displayMessage("Cart Items:");
         for (ProductBean product : currentUser.cart) {
-            view.displayMessage(product.getProductName()+"\t"+product.getPrice());
+            view.displayMessage(product.getProductId()+"\t"+product.getProductName()+"\t"+product.getPrice());
             price+=product.getPrice();
         }
         view.displayMessage("Total bill: "+price);

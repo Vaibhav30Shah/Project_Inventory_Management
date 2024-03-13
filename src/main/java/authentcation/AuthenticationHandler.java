@@ -8,21 +8,19 @@ import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.List;
 import java.util.Map;
+import java.util.Scanner;
 
 public class AuthenticationHandler implements Runnable {
     private Socket clientSocket;
     private Map<String, String> registeredUsers;
+    Scanner scanner=new Scanner(System.in);
+
 
     public AuthenticationHandler(Socket clientSocket, Map<String, String> registeredUsers) {
         this.clientSocket = clientSocket;
         this.registeredUsers = registeredUsers;
     }
 
-    public AuthenticationHandler(List<UserBean> users){
-        for (UserBean user : users) {
-            registeredUsers.put(user.getEmail(), user.getPassword());
-        }
-    }
 
     @Override
     public void run() {
@@ -33,12 +31,15 @@ public class AuthenticationHandler implements Runnable {
             String email = in.readLine();
             String password = in.readLine();
 
+            System.out.println("Server is trying to validate your credentials. Please Wait!!");
+
             if (authenticate(email, password)) {
                 String authToken = generateAuthToken();
-                System.out.println(authToken);
+                out.println(authToken);
             } else {
                 out.println("Invalid credentials");
             }
+
 
             clientSocket.close();
         } catch (IOException e) {
@@ -47,6 +48,10 @@ public class AuthenticationHandler implements Runnable {
     }
 
     private boolean authenticate(String email, String password) {
+//        System.out.println(registeredUsers.keySet());
+        if(!registeredUsers.keySet().contains(email)){
+            return false;
+        }
         String registeredPassword = registeredUsers.get(email);
         return registeredPassword != null && registeredPassword.equals(password);
     }

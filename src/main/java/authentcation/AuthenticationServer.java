@@ -34,7 +34,7 @@ public class AuthenticationServer implements Runnable{
 
             while (true) {
                 Socket clientSocket = serverSocket.accept();
-                System.out.println("New client connected: " + clientSocket.getInetAddress().getHostAddress());
+                System.out.println("New client connected for authentication: " + clientSocket.getInetAddress().getHostAddress());
 
                 // Create a new thread to handle the authentication request
                 Thread authHandler = new Thread(new AuthenticationHandler(clientSocket, registeredUsers));
@@ -43,13 +43,5 @@ public class AuthenticationServer implements Runnable{
         } catch (IOException e) {
             e.printStackTrace();
         }
-    }
-    public AuthenticationServer(String email, String password) {
-        registeredUsers.put(email,password);
-    }
-
-    public static boolean authenticate(String email, String password) {
-        String registeredPassword = registeredUsers.get(email);
-        return registeredPassword != null && registeredPassword.equals(password);
     }
 }
