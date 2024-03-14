@@ -1,11 +1,14 @@
-6092,iPhone,100000
-1470,LED TV,55000
-3528,Monitor,5000
-4773,Mouse,400
-1670,Keyboard,1000
-4045,USB Cable,100
-6640,Airpods,17000
-6627,Speaker,1000
-6712,HP Laptop,60000
-3530,Graphics Card,4500
-1718,Water bottle,250
+1105,iPhone,100000
+552,LED TV,55000
+794,Monitor,5000
+2461,Mouse,400
+7655,Keyboard,1000
+4821,USB Cable,100
+1314,Airpods,17000
+1739,Speaker,1000
+7021,HP Laptop,60000
+6190,Graphics Card,4500
+3508,Water bottle,250
+6563,Airdopes,4999
+7232,Lenovo Thinkpad,49999
+636,Smart Watch,2599

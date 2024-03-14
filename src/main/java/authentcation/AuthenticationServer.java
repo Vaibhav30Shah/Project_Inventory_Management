@@ -9,38 +9,56 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class AuthenticationServer implements Runnable{
+public class AuthenticationServer implements Runnable
+{
     private static final int PORT = 1429;
+
     private static Map<String, String> registeredUsers = new HashMap<>();
 
-    public AuthenticationServer(List<UserBean> users) {
+    public AuthenticationServer()
+    {
+        List<UserBean> users=UserBean.loadUserData();
         initializeRegisteredUsers(users);
     }
 
-    private void initializeRegisteredUsers(List<UserBean> users) {
-        for (UserBean user : users) {
+    public static Map initializeRegisteredUsers(List<UserBean> users)
+    {
+        for (UserBean user : users)
+        {
             registeredUsers.put(user.getEmail(), user.getPassword());
         }
+        return registeredUsers;
+//        System.out.println("Initilize reg users "+registeredUsers);
     }
 
-    public static void addNewUser(String email, String password) {
+    public static void addNewUser(String email, String password)
+    {
         registeredUsers.put(email, password);
     }
 
     @Override
-    public void run() {
-        try (ServerSocket serverSocket = new ServerSocket(PORT)) {
+    public void run()
+    {
+        try (ServerSocket serverSocket = new ServerSocket(PORT))
+        {
             System.out.println("Authentication Server started on port " + PORT);
 
-            while (true) {
+            while (true)
+            {
                 Socket clientSocket = serverSocket.accept();
+
                 System.out.println("New client connected for authentication: " + clientSocket.getInetAddress().getHostAddress());
 
+                System.out.println("Inside AS run "+registeredUsers);
+
                 // Create a new thread to handle the authentication request
-                Thread authHandler = new Thread(new AuthenticationHandler(clientSocket, registeredUsers));
+                Thread authHandler = new Thread(new AuthenticationHandler(clientSocket, AuthenticationServer.initializeRegisteredUsers(UserBean.loadUserData())));
+
                 authHandler.start();
             }
-        } catch (IOException e) {
+        }
+        catch (IOException e)
+        {
             e.printStackTrace();
         }
     }

@@ -3,4 +3,9 @@ Ram,ram@gmail.com,ram123,false
 Shyam,shyam@gmail.com,shyam123,false
 Ravan,ravan@gmail.com,ravan123,false
 admin,admin@admin.com,admin,true
-asd,asd@df.cdc,asdcc,false
+Mukesh ambani,mukesh@ambani.com,mukesh123,true
+Saahil,saahil@gmail.com,saahil123,false
+Krishna,krishna@gmail.com,krishna123,false
+Vasudev,vasudev@gmail.com,vasu123,false
+Madhav,madhav@gmail.com,madhav123,false
+deven,deven@gmail.com,deven123,false

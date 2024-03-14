@@ -1,5 +1,7 @@
 package authentcation;
+
 import bean.UserBean;
+import client.InventoryClient;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -10,54 +12,73 @@ import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 
-public class AuthenticationHandler implements Runnable {
+public class AuthenticationHandler implements Runnable
+{
     private Socket clientSocket;
+
     private Map<String, String> registeredUsers;
-    Scanner scanner=new Scanner(System.in);
 
+    Scanner scanner = new Scanner(System.in);
 
-    public AuthenticationHandler(Socket clientSocket, Map<String, String> registeredUsers) {
+    public AuthenticationHandler(Socket clientSocket, Map<String, String> registeredUsers)
+    {
         this.clientSocket = clientSocket;
+
         this.registeredUsers = registeredUsers;
     }
 
 
     @Override
-    public void run() {
-        try {
+    public void run()
+    {
+        System.out.println("AH: "+registeredUsers);
+        try
+        {
             BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+
             PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
 
             String email = in.readLine();
+
             String password = in.readLine();
 
             System.out.println("Server is trying to validate your credentials. Please Wait!!");
 
-            if (authenticate(email, password)) {
+            if (authenticate(email, password))
+            {
                 String authToken = generateAuthToken();
+
                 out.println(authToken);
-            } else {
+            }
+            else
+            {
                 out.println("Invalid credentials");
             }
 
-
             clientSocket.close();
-        } catch (IOException e) {
+        }
+        catch (IOException e)
+        {
             e.printStackTrace();
         }
     }
 
-    private boolean authenticate(String email, String password) {
-//        System.out.println(registeredUsers.keySet());
-        if(!registeredUsers.keySet().contains(email)){
+    private boolean authenticate(String email, String password)
+    {
+        if (!registeredUsers.keySet().contains(email))
+        {
             return false;
         }
+
         String registeredPassword = registeredUsers.get(email);
+
         return registeredPassword != null && registeredPassword.equals(password);
     }
 
-    private String generateAuthToken() {
+    private String generateAuthToken()
+    {
         System.out.println("User is trying to login");
+
         return "Logged in";
     }
 }

@@ -4,23 +4,51 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ProductBean
-{
-    private int productId;
+public class ProductRepository {
+    private static final String FILE_NAME = "productData.txt";
+    private static List<ProductBean> products = new ArrayList<>();
 
-    private int price;
+    static {
+        loadProductData();
+    }
 
-    private String productName;
+    public static List<ProductBean> getProducts() {
+        return products;
+    }
 
-    public static String FILE_NAME = "productData.txt";
+    public static void addProduct(ProductBean product) {
+        products.add(product);
+        saveProductData(products);
+    }
 
-    public ProductBean(int price, String productName)
-    {
-        this.price = price;
+    public static void updateProduct(int productId, String newProductName, int newProductPrice) {
+        ProductBean product = findProduct(productId);
+        if (product != null) {
+            if (!newProductName.isBlank()) {
+                product.setProductName(newProductName);
+            }
+            if (newProductPrice != 0) {
+                product.setPrice(newProductPrice);
+            }
+            saveProductData(products);
+        }
+    }
 
-        this.productName = productName;
+    public static void removeProduct(int productId) {
+        ProductBean product = findProduct(productId);
+        if (product != null) {
+            products.remove(product);
+            saveProductData(products);
+        }
+    }
 
-        this.productId = (int) (Math.random() * 10000);
+    private static ProductBean findProduct(int productId) {
+        for (ProductBean product : products) {
+            if (product.getProductId() == productId) {
+                return product;
+            }
+        }
+        return null;
     }
 
     public static void saveProductData(List<ProductBean> products)
@@ -80,38 +108,4 @@ public class ProductBean
         }
         return produts;
     }
-
-    //    public void updateName(int pid, String name){
-//        this.productName=name;
-//    }
-    public int getProductId()
-    {
-        return productId;
-    }
-
-    public void setProductId(int productId)
-    {
-        this.productId = productId;
-    }
-
-    public int getPrice()
-    {
-        return price;
-    }
-
-    public void setPrice(int price)
-    {
-        this.price = price;
-    }
-
-    public String getProductName()
-    {
-        return productName;
-    }
-
-    public void setProductName(String productName)
-    {
-        this.productName = productName;
-    }
-
 }
