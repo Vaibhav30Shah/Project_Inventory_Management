@@ -1,111 +1,139 @@
 package bean;
 
+import bean.Product;
+import categories.*;
+
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ProductRepository {
-    private static final String FILE_NAME = "productData.txt";
-    private static List<ProductBean> products = new ArrayList<>();
+public class ProductRepository
+{
+    private static final String ELECTRONICS_FILE = "src/main/java/files/electronics_products.txt";
 
-    static {
-        loadProductData();
-    }
+    private static final String CLOTHING_FILE = "src/main/java/files/clothing_products.txt";
 
-    public static List<ProductBean> getProducts() {
+    private static final String HOME_DECOR_FURNITURE_FILE = "src/main/java/files/home_decor_furniture_products.txt";
+
+    private static final String BOOKS_FILE = "src/main/java/files/books_products.txt";
+
+    private static final String SPORTS_FITNESS_AND_BAGS_FILE = "src/main/java/files/sports_fitness_bags_products.txt";
+
+    public List<Product> getProducts(int category)
+    {
+        List<Product> products = new ArrayList<>();
+
+        String fileName = getFileNameForCategory(category);
+
+//        System.out.println(fileName);
+
+        File file=new File(fileName);
+
+        if(file.exists())
+        {
+            try (BufferedReader reader = new BufferedReader(new FileReader(fileName)))
+            {
+                String line;
+
+                while ((line = reader.readLine()) != null)
+                {
+                    String[] data = line.split(",");
+
+                    String productId = data[0];
+
+                    String productName = data[1];
+
+                    int productPrice = Integer.parseInt(data[2]);
+
+                    Product product = createProductInstance(productId, category, productName, productPrice);
+
+                    products.add(product);
+                }
+            }
+            catch (IOException e)
+            {
+                e.printStackTrace();
+            }
+        }
+        else
+        {
+            try
+            {
+                file.createNewFile();
+            }
+            catch (IOException e)
+            {
+                System.out.println(e);
+            }
+        }
+
         return products;
     }
 
-    public static void addProduct(ProductBean product) {
-        products.add(product);
-        saveProductData(products);
-    }
-
-    public static void updateProduct(int productId, String newProductName, int newProductPrice) {
-        ProductBean product = findProduct(productId);
-        if (product != null) {
-            if (!newProductName.isBlank()) {
-                product.setProductName(newProductName);
-            }
-            if (newProductPrice != 0) {
-                product.setPrice(newProductPrice);
-            }
-            saveProductData(products);
-        }
-    }
-
-    public static void removeProduct(int productId) {
-        ProductBean product = findProduct(productId);
-        if (product != null) {
-            products.remove(product);
-            saveProductData(products);
-        }
-    }
-
-    private static ProductBean findProduct(int productId) {
-        for (ProductBean product : products) {
-            if (product.getProductId() == productId) {
-                return product;
-            }
-        }
-        return null;
-    }
-
-    public static void saveProductData(List<ProductBean> products)
+    private String getFileNameForCategory(int category)
     {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(FILE_NAME)))
+        switch (category)
         {
-            for (ProductBean product : products)
+            case 1:
+                return ELECTRONICS_FILE;
+
+            case 2:
+                return CLOTHING_FILE;
+
+            case 3:
+                return HOME_DECOR_FURNITURE_FILE;
+
+            case 4:
+                return BOOKS_FILE;
+
+            case 5:
+                return SPORTS_FITNESS_AND_BAGS_FILE;
+
+            default:
+                System.out.println("Invalid Product category");
+        }
+        return " ";
+    }
+
+    private Product createProductInstance(String productId, int category, String productName, int productPrice)
+    {
+        switch (category)
+        {
+            case 1:
+                return new ElectronicsProduct(productId, productName, productPrice);
+
+            case 2:
+                return new ClothingProduct(productId, productName, productPrice);
+
+            case 3:
+                return new HomeDecorAndFurniture(productId, productName, productPrice);
+
+            case 4:
+                return new Books(productId, productName, productPrice);
+
+            case 5:
+                return new SportsFitnessBagsLuggage(productId, productName, productPrice);
+
+            default:
+                System.out.println("Invalid Product Category");
+                return null;
+        }
+    }
+
+    public void saveProducts(int category, List<Product> products)
+    {
+        String fileName = getFileNameForCategory(category);
+
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(fileName)))
+        {
+            for (Product product : products)
             {
-                writer.write(product.getProductId() + "," + product.getProductName() + "," + product.getPrice() + "\n");
+                writer.write(product.getProductId() + "," + product.getProductName() + "," + product.getProductPrice() + "," + product.getQuantity() + "\n");
             }
         }
         catch (IOException e)
         {
             e.printStackTrace();
         }
-    }
-
-    public static List<ProductBean> loadProductData()
-    {
-        List<ProductBean> produts = new ArrayList<>();
-
-        try (BufferedReader reader = new BufferedReader(new FileReader(FILE_NAME)))
-        {
-            String line;
-
-            while ((line = reader.readLine()) != null)
-            {
-                String[] splitArray = line.split(",");
-
-                String productId = splitArray[0];
-
-                String productName = splitArray[1];
-
-                int price = Integer.parseInt(splitArray[2]);
-
-                ProductBean product = new ProductBean(price, productName);
-
-                produts.add(product);
-            }
-        }
-        catch (FileNotFoundException e)
-        {
-            File file = new File(FILE_NAME);
-
-            try
-            {
-                file.createNewFile();
-            }
-            catch (IOException ex)
-            {
-                System.out.println(e);
-            }
-        }
-        catch (IOException e)
-        {
-            System.out.println(e);
-        }
-        return produts;
     }
 }

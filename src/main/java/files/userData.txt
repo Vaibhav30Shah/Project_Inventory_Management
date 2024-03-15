@@ -1,0 +1,6 @@
+Vaibhav,vaibhav@gmail.com,vaibhav123,false
+Ram,ram@gmail.com,ram123,false
+Shyam,shyam@gmail.com,shyam123,false
+Ravan,ravan@gmail.com,ravan123,false
+admin,admin@admin.com,admin,true
+Saahil Pandya,saahil@gmail.com,saahil123,false

@@ -5,6 +5,7 @@ import bean.ProductBean;
 import bean.ProductRepository;
 import bean.UserBean;
 import client.ClientHandler;
+import view.InventoryView;
 
 import java.net.*;
 import java.io.*;
@@ -15,29 +16,32 @@ public class InventoryServer
 {
     private static final int PORT = 1428;
 
-    private static List<ProductBean> products = new ArrayList<>();
+    private static volatile List<ProductBean> products = new ArrayList<>();
 
     private static List<UserBean> users = new ArrayList<>();
-
-    private static ProductRepository productRepository;
 
     private static volatile boolean shuttingDown = false;
 
 
     public static void main(String[] args)
     {
-        users = UserBean.loadUserData();
-        products = ProductBean.loadProductData();
-
-        if (users.isEmpty() || products.isEmpty())
-        {
-            initializeDummyData();
-        }
-
-        UserBean.saveUserData(users);
-
-//        productRepository = new ProductRepository();
-        ProductBean.saveProductData(products);
+//        ProductRepository productRepository = new ProductRepository();
+//
+//        InventoryView view = new InventoryView();
+//
+//        users = UserBean.loadUserData();
+//
+//        products = ProductBean.loadProductData();
+//
+//        if (users.isEmpty() || products.isEmpty())
+//        {
+//            initializeDummyData();
+//        }
+//
+//        UserBean.saveUserData(users);
+//
+////        productRepository = new ProductRepository();
+//        ProductBean.saveProductData(products);
 
         AuthenticationServer authServer = new AuthenticationServer();
 
@@ -64,6 +68,20 @@ public class InventoryServer
                 System.out.println("New client connected: " + clientSocket.getInetAddress().getHostName());
 
                 ClientHandler clientHandler = new ClientHandler(products, users);
+
+                Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+                    if (!shuttingDown) {
+                        try
+                        {
+                            clientSocket.close();
+                        }
+                        catch (IOException e)
+                        {
+                            e.printStackTrace();
+                        }
+                    }
+                    shuttingDown = true;
+                }));
 
                 // new thread to handle the client
 //                Thread clientThread = new Thread(new InventoryClient(clientSocket, products, users));

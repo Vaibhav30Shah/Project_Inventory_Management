@@ -1,5 +1,6 @@
 package client;
 
+import bean.ProductRepository;
 import controller.InventoryController;
 import bean.ProductBean;
 import bean.UserBean;
@@ -39,9 +40,11 @@ public class InventoryClient implements Runnable
 
             PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
 
-            InventoryView view = new InventoryView(in, out);
+            InventoryView view = new InventoryView();
 
-            controller = new InventoryController(products, users, view, clientSocket);
+            ProductRepository repository=new ProductRepository();
+
+            controller = new InventoryController(products, users, view, clientSocket, repository);
 
             controller.start();
 

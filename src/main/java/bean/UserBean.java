@@ -15,7 +15,9 @@ public class UserBean
 
     public ArrayList<ProductBean> cart = new ArrayList<>();
 
-    public static String FILE_NAME = "userData.txt";
+    public static String FILE_NAME = "src/main/java/files/userData.txt";
+
+    public static String USER_HISTORY_FILE="src/main/java/files/userOrderHistory.txt";
 
     public UserBean(String firstName, String email, String password)
     {
@@ -28,14 +30,14 @@ public class UserBean
         this.password = password;
     }
 
-    public void saveOrderHistory(List<ProductBean> orderedProducts)
+    public void saveOrderHistory(List<Product> orderedProducts)
     {
         try
         {
-            FileWriter writer = new FileWriter("userOrderHistory.txt", true); // Append mode
+            FileWriter writer = new FileWriter(USER_HISTORY_FILE, true); // Append mode
 
             writer.write(getEmail() + "," + orderedProducts.stream()
-                    .map(ProductBean::getProductName)
+                    .map(Product::getProductName)
                     .collect(Collectors.joining(",")) + "\n");
 
             writer.close();
@@ -67,7 +69,7 @@ public class UserBean
 
         try
         {
-            File file = new File("userData.txt");
+            File file = new File(FILE_NAME);
 
             if (file.exists())
             {

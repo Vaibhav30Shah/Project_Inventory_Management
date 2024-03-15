@@ -1,0 +1,14 @@
+4734,iPhone,100000
+6435,LED TV,55000
+3687,Monitor,5000
+8273,Mouse,400
+1296,Keyboard,1000
+4555,USB Cable,100
+5085,Airpods,17000
+1234,Speaker,1000
+3534,HP Laptop,60000
+1752,Graphics Card,4500
+3811,Water bottle,250
+9428,Airdopes,4999
+1088,Lenovo Thinkpad,49999
+5799,Smart Watch,2599

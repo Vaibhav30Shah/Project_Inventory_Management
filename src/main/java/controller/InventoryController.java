@@ -1,10 +1,13 @@
 package controller;
 
-import authentcation.AuthenticationHandler;
+import bean.Product;
 import bean.ProductBean;
+import bean.ProductRepository;
 import bean.UserBean;
 import authentcation.AuthenticationServer;
+import categories.*;
 import view.InventoryView;
+
 import java.io.*;
 import java.net.Socket;
 import java.util.ArrayList;
@@ -12,16 +15,29 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Scanner;
 
-public class InventoryController {
+public class InventoryController
+{
     private InventoryView view;
+
     private Scanner scanner = new Scanner(System.in);
+
     private volatile List<UserBean> users;
+
     private volatile List<ProductBean> products;
+
     private UserBean currentUser;
+
     Socket socket;
+
     static int count = 0;
 
-    public InventoryController(List<ProductBean> products, List<UserBean> users, InventoryView view, Socket socket)
+    List<Product> cart;
+
+    ProductRepository productRepository;
+
+    public static String USER_ORDER_HISTORY_FILE="src/main/java/files/userOrderHistory.txt";
+
+    public InventoryController(List<ProductBean> products, List<UserBean> users, InventoryView view, Socket socket, ProductRepository repository)
     {
         this.products = products;
 
@@ -30,6 +46,10 @@ public class InventoryController {
         this.view = view;
 
         this.socket = socket;
+
+        this.cart = new ArrayList<>();
+
+        this.productRepository = repository;
     }
 
 
@@ -64,9 +84,9 @@ public class InventoryController {
 
                 try
                 {
-                    socket.close();
-
                     System.out.println(socket.getInetAddress() + " exited");
+
+                    socket.close();
                 }
                 catch (IOException e)
                 {
@@ -106,7 +126,7 @@ public class InventoryController {
 
             users = UserBean.loadUserData();
 
-            AuthenticationServer server=new AuthenticationServer();
+            AuthenticationServer server = new AuthenticationServer();
 
             server.initializeRegisteredUsers(users);
 
@@ -128,7 +148,7 @@ public class InventoryController {
 
             BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 
-            AuthenticationServer server=new AuthenticationServer();
+            AuthenticationServer server = new AuthenticationServer();
 
             server.initializeRegisteredUsers(users);
 
@@ -152,13 +172,14 @@ public class InventoryController {
                 {
                     count = 0;
 
-                    view.displayMessage("Login successful!");
+                    view.displayMessage("Login successful! Welcome "+currentUser.getFirstName());
 
                     if (currentUser.isAdmin())
                     {
                         handleAdminMenu();
                     }
-                    else {
+                    else
+                    {
                         handleCustomerMenu();
                     }
                 }
@@ -229,7 +250,7 @@ public class InventoryController {
                     break;
 
                 case 2:
-                    view.displayProducts(products);
+                    viewProductsByCategory();
                     break;
 
                 case 3:
@@ -254,26 +275,69 @@ public class InventoryController {
         }
     }
 
+    private Product createProductInstance(int category, String productName, int productPrice)
+    {
+        String productId;
+        switch (category)
+        {
+            case 1:
+                productId="E"+(int) (Math.random() * 10000);
+                return new ElectronicsProduct(productId, productName, productPrice);
+
+            case 2:
+                productId="C"+(int) (Math.random() * 10000);
+                return new ClothingProduct(productId, productName, productPrice);
+
+            case 3:
+                productId="FH"+(int) (Math.random() * 10000);
+                return new HomeDecorAndFurniture(productId, productName, productPrice);
+
+            case 4:
+                productId="B"+(int) (Math.random() * 10000);
+                return new Books(productId, productName, productPrice);
+
+            case 5:
+                productId="SFB"+(int) (Math.random() * 10000);
+                return new SportsFitnessBagsLuggage(productId, productName, productPrice);
+
+            default:
+                System.out.println("Invalid category");
+        }
+        return null;
+    }
+
     private void addProduct()
     {
+        int category = view.getUserIntInput("Enter category: \n1. Electronics \n2. Clothing \n3. Furniture and Home Decor" +
+                "\n4. Books \n5. Sports, Fitness, Bags and Luggage");
+
         String productName = view.getUserInput("Enter product name: ");
 
         int productPrice = view.getUserIntInput("Enter product price: ");
 
-        ProductBean product = new ProductBean(productPrice, productName);
+//        String productId=null;
+
+        Product product = createProductInstance(category, productName, productPrice);
+
+        List<Product> products = productRepository.getProducts(category);
 
         products.add(product);
 
-//        ProductBean.saveProductData(products);
+        productRepository.saveProducts(category, products);
 
         view.displayMessage("Product added successfully!");
     }
 
     private void updateProduct()
     {
-        int productId = view.getUserIntInput("Enter product ID to update: ");
+        int category = view.getUserIntInput("Enter category: \n1. Electronics \n2. Clothing \n3. Furniture and Home Decor" +
+                "\n4. Books \n5. Sports, Fitness, Bags and Luggage");
 
-        ProductBean product = findProduct(productId);
+        String productId = view.getUserInput("Enter product ID to update: ");
+
+        List<Product> products = productRepository.getProducts(category);
+
+        Product product = findProduct(products, productId);
 
         if (product != null)
         {
@@ -281,17 +345,17 @@ public class InventoryController {
 
             if (!newName.isBlank())
             {
-                product.setProductName(newName);
+                product.setProductname(newName);
             }
 
             int newPrice = view.getUserIntInput("Enter new product price (0 to keep current): ");
 
             if (newPrice != 0)
             {
-                product.setPrice(newPrice);
+                product.setProductPrice(newPrice);
             }
 
-//            ProductBean.saveProductData(products);
+            productRepository.saveProducts(category, products);
 
             view.displayMessage("Product details updated successfully!");
         }
@@ -303,15 +367,20 @@ public class InventoryController {
 
     private void removeProduct()
     {
-        int productId = view.getUserIntInput("Enter product ID to remove: ");
+        int category = view.getUserIntInput("Enter category: \n1. Electronics \n2. Clothing \n3. Furniture and Home Decor" +
+                "\n4. Books \n5. Sports, Fitness, Bags and Luggage");
 
-        ProductBean product = findProduct(productId);
+        String productId = view.getUserInput("Enter product ID to remove: ");
+
+        List<Product> products = productRepository.getProducts(category);
+
+        Product product = findProduct(products, productId);
 
         if (product != null)
         {
             products.remove(product);
 
-//            ProductBean.saveProductData(products);
+            productRepository.saveProducts(category, products);
 
             view.displayMessage("Product removed successfully!");
         }
@@ -327,7 +396,7 @@ public class InventoryController {
 
         while (repeat)
         {
-            view.displayMessage("0 For Logout\n1 For View Products\n2 For Add To Cart \n3 For Remove from Cart\n4 For View Cart \n5 For Order History");
+            view.displayMessage("0 For Logout\n1 For View Category wise Products\n2 For Add To Cart \n3 For Remove from Cart\n4 For View Cart \n5 For Order History");
 
             int choice = view.getUserIntInput("Enter your choice: ");
 
@@ -339,7 +408,8 @@ public class InventoryController {
                     break;
 
                 case 1:
-                    view.displayProducts(products);
+                    viewProductsByCategory();
+//                    view.displayProducts(products);
                     break;
 
                 case 2:
@@ -364,15 +434,36 @@ public class InventoryController {
         }
     }
 
+    private void viewProductsByCategory()
+    {
+        int category = view.getUserIntInput("Enter category: \n1. Electronics \n2. Clothing \n3. Furniture and Home Decor" +
+                "\n4. Books \n5. Sports, Fitness, Bags and Luggage");
+
+        List<Product> products = productRepository.getProducts(category);
+
+        view.displayProducts(products);
+    }
+
     private void addToCart()
     {
-        int productId = view.getUserIntInput("Enter productId for cart: ");
+        int category = view.getUserIntInput("Enter category: \n1. Electronics \n2. Clothing \n3. Furniture and Home Decor" +
+                "\n4. Books \n5. Sports, Fitness, Bags and Luggage");
 
-        ProductBean product = findProduct(productId);
+        String productId = view.getUserInput("Enter product ID: ");
+
+        int quantity=getProductQuantity();
+
+        List<Product> products = productRepository.getProducts(category);
+
+        Product product = findProduct(products, productId);
 
         if (product != null)
         {
-            currentUser.cart.add(product);
+            product.setQuantity(quantity);
+
+            product.setProductPrice(product.getProductPrice() * quantity);
+
+            cart.add(product);
 
             view.displayMessage("Product added to cart!");
         }
@@ -382,17 +473,88 @@ public class InventoryController {
         }
     }
 
+    private int getProductQuantity(){
+        int quantity = view.getUserIntInput("Enter quantity: ");
+
+        if(quantity>0)
+        {
+            return quantity;
+        }
+
+        else
+        {
+            System.out.println("Quantity Must be grater than 0!");
+
+            return getProductQuantity();
+        }
+    }
+
+    private Product findProduct(List<Product> products, String productId)
+    {
+        for (Product product : products)
+        {
+            if (product.getProductId().equals(productId))
+            {
+                return product;
+            }
+        }
+        return null;
+    }
+
+//    private void addToCart()
+//    {
+//        int productId = view.getUserIntInput("Enter productId for cart: ");
+//
+//        ProductBean product = findProduct(productId);
+//
+//        if (product != null)
+//        {
+//            currentUser.cart.add(product);
+//
+//            view.displayMessage("Product added to cart!");
+//        }
+//        else
+//        {
+//            view.displayMessage("Invalid product ID!");
+//        }
+//    }
+
     private void removeFromCart()
     {
-        int productId = view.getUserIntInput("Enter productId for cart: ");
+        String productId = view.getUserInput("Enter productId: ");
 
-        ProductBean product = findProduct(productId);
+        int category=0;
+
+        switch(productId.charAt(0)){
+            case 'E':
+                category=1;
+                break;
+
+            case 'C':
+                category=2;
+                break;
+
+            case 'F':
+                category=3;
+                break;
+
+            case 'B':
+                category=4;
+                break;
+
+            case 'S':
+                category=5;
+                break;
+        }
+        List<Product> products = productRepository.getProducts(category);
+
+        Product product = findProduct(products, productId);
 
         if (product != null)
         {
-            if (currentUser.cart.removeIf(currentProduct -> currentProduct.getProductId() == productId))
+            if (cart.removeIf(currentProduct -> currentProduct.getProductId().equals(productId)))
             {
-                currentUser.cart.remove(product);
+                cart.remove(product);
 
                 view.displayMessage("Product removed from cart!");
             }
@@ -423,20 +585,34 @@ public class InventoryController {
     {
         int price = 0;
 
+        float cgst=0.125f;
+
+        float sgst=0.125f;
+
+        double grand_total=0;
+
         view.displayMessage("Cart Items:");
 
-        List<ProductBean> orderedProducts = new ArrayList<>();
+        List<Product> orderedProducts = new ArrayList<>();
 
-        for (ProductBean product : currentUser.cart)
+        for (Product product : cart)
         {
-            view.displayMessage(product.getProductId() + "\t" + product.getProductName() + "\t" + product.getPrice());
+            view.displayMessage(product.getProductId() + "\t" + product.getProductName() + "\t" + product.getQuantity()+ "\t" + (product.getProductPrice()*product.getQuantity()));
 
-            price += product.getPrice();
+            price += (product.getProductPrice()*product.getQuantity());
 
             orderedProducts.add(product);
         }
 
         view.displayMessage("Total bill: " + price);
+
+        view.displayMessage("CGST(12.5%): "+(price*cgst));
+
+        view.displayMessage("SGST(12.5%): "+(price*sgst));
+
+        grand_total=price+(price*cgst)+(price*sgst);
+
+        view.displayMessage("Grand Total: "+grand_total);
 
         if (price > 0)
         {
@@ -446,7 +622,7 @@ public class InventoryController {
             {
                 currentUser.saveOrderHistory(orderedProducts);
 
-                currentUser.cart.clear();
+                cart.clear();
 
                 view.displayMessage("Order placed successfully!");
             }
@@ -457,7 +633,7 @@ public class InventoryController {
     {
         try
         {
-            File file = new File("userOrderHistory.txt");
+            File file = new File(USER_ORDER_HISTORY_FILE);
 
             if (file.exists())
             {
@@ -496,7 +672,7 @@ public class InventoryController {
     {
         try
         {
-            File file = new File("userOrderHistory.txt");
+            File file = new File(USER_ORDER_HISTORY_FILE);
 
             if (file.exists())
             {
@@ -525,9 +701,9 @@ public class InventoryController {
 
                 reader.close();
 
-                if (orderHistoryFound==false)
+                if (orderHistoryFound == false)
                 {
-                    view.displayMessage("No order history found for user "+currentUser.getFirstName());
+                    view.displayMessage("No order history found for user " + currentUser.getFirstName());
                 }
             }
             else

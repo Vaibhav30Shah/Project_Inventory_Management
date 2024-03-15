@@ -2,13 +2,17 @@ package bean;
 
 public interface Product
 {
-    int getProductId();
+    String getProductId();
 
     String getProductName();
 
+    void setProductname(String name);
+
     int getProductPrice();
 
-    int getProductQuantity();
+    void setProductPrice(int price);
 
-    void setProductQuantity(int quantity);
+    int getQuantity();
+
+    void setQuantity(int quantity);
 }

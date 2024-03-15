@@ -1,0 +1,15 @@
+C4398,Men's Denims,699,0
+C701,Allen Solly Men's Regular Fit Polo,669,0
+C4068,Lymio Men's Casual Shirt,479,0
+C2135,Van Heusen Men's Trousers,1312,0
+C5254,Peter England Men's Slim fit blazer,3189,0
+C6756,Levi's Jeans(Black and Blue),2699,0
+C1292,U.S. POLO ASSN. Men's Jeans,1490,0
+C4848,Pepe Jeans,3599,0
+C8001,Ben Martin's Relaxed fit jeans,649,0
+C4674,Kanjivaram soft silk saree,1599,0
+C1752,Banarasi saree pure soft silk,479,0
+C1947,Pure Handwoven Bandhani saree gharchola,6599,0
+C787,Women's printed cotton kurta and pant set,639,0
+C9552,Women's cotton blend anarkali printed,679,0
+C3530,Women's tussar silk lehriya lehenga choli set,2298,0

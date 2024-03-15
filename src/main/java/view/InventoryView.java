@@ -1,9 +1,9 @@
 package view;
 
+import bean.Product;
 import bean.ProductBean;
 import bean.UserBean;
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.List;
 import java.util.Scanner;
@@ -16,29 +16,26 @@ public class InventoryView
 
     private PrintWriter out;
 
+    String SINGLE_TAB="\t";
     String DOUBLE_TAB = "\t\t";
 
-    public InventoryView(BufferedReader in, PrintWriter out)
-    {
-        this.in = in;
+    String MULTI_TAB="\t\t\t\t\t";
 
-        this.out = out;
-    }
 
     public void displayMenu()
     {
         System.out.println("1 For Signup\n2 For Login\n3 For exit");
     }
 
-    public void displayProducts(List<ProductBean> products)
+    public void displayProducts(List<Product> products)
     {
         System.out.println("*********** Product List ******************");
 
-        System.out.println("ProductId ---- Name ---- price-----");
+        System.out.println("ProductId"+SINGLE_TAB+" ---- Name"+MULTI_TAB+"---- Price");
 
-        for (ProductBean product : products)
+        for (Product product : products)
         {
-            System.out.println(product.getProductId() + DOUBLE_TAB + product.getProductName() + DOUBLE_TAB + product.getPrice());
+            System.out.println(product.getProductId() + SINGLE_TAB + product.getProductName() + MULTI_TAB + product.getProductPrice());
         }
     }
 
@@ -67,7 +64,7 @@ public class InventoryView
         }
         catch (NumberFormatException e)
         {
-            out.println("Invalid input. Please enter an integer.");
+            System.out.println("Invalid input. Please enter an integer.");
 
             return getUserIntInput(prompt);
         }

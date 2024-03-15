@@ -1,0 +1,12 @@
+E1275,TV,500000,0
+E28,SamsungS25,75999,0
+E2765,Boat airdopes 402,3999,0
+E3395,Deep bass Home theater,3319,0
+E5409,OnePlus Nord CE3 5G,20999,0
+E6896,Samsung Galaxy Z Flip5 5G,92999,0
+E1113,Samsung Galaxy S23 Ultra 5G,99999,0
+E4776,ASUS Vivobook 16,94990,0
+E9369,HP Pavilion x360,77490,0
+E9975,Apple 2023 MacBook Pro,199990,0
+E8265,Apple MacBook Air,74990,0
+E9737,Apple MacBook Pro 16-inch M3 Pro Chip,249990,0

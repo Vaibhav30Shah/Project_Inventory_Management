@@ -12,7 +12,7 @@ public class ProductBean
 
     private String productName;
 
-    public static String FILE_NAME = "productData.txt";
+    public static String FILE_NAME = "src/main/java/files/productData.txt";
 
     public ProductBean(int price, String productName)
     {

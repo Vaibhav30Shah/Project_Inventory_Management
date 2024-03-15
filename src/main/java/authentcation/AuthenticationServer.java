@@ -28,7 +28,6 @@ public class AuthenticationServer implements Runnable
             registeredUsers.put(user.getEmail(), user.getPassword());
         }
         return registeredUsers;
-//        System.out.println("Initilize reg users "+registeredUsers);
     }
 
     public static void addNewUser(String email, String password)
