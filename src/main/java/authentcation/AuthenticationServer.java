@@ -1,43 +1,28 @@
 package authentcation;
 
 import bean.UserBean;
-
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
-public class AuthenticationServer implements Runnable
+
+public class AuthenticationServer
 {
     private static final int PORT = 1429;
-
-    private static Map<String, String> registeredUsers = new HashMap<>();
-
-    public AuthenticationServer()
-    {
-        List<UserBean> users=UserBean.loadUserData();
-
-        initializeRegisteredUsers(users);
-    }
-
-    public static Map initializeRegisteredUsers(List<UserBean> users)
-    {
-        for (UserBean user : users)
-        {
-            registeredUsers.put(user.getEmail(), user.getPassword());
-        }
-        return registeredUsers;
-    }
+    public  static List<UserBean> users;
+    public static Map<String, String> registeredUsers = new ConcurrentHashMap<>();
 
     public static void addNewUser(String email, String password)
     {
         registeredUsers.put(email, password);
+
+        System.out.println(registeredUsers.get(email));
     }
 
-    @Override
-    public void run()
+    public static void main(String[] args)
     {
         try (ServerSocket serverSocket = new ServerSocket(PORT))
         {
@@ -49,10 +34,17 @@ public class AuthenticationServer implements Runnable
 
                 System.out.println("New client connected for authentication: " + clientSocket.getInetAddress().getHostAddress());
 
-                System.out.println("Inside AS run "+registeredUsers);
+                System.out.println("Inside AS run "+ registeredUsers);
 
                 // Create a new thread to handle the authentication request
-                Thread authHandler = new Thread(new AuthenticationHandler(clientSocket, AuthenticationServer.initializeRegisteredUsers(UserBean.loadUserData())));
+                users=UserBean.loadUserData();
+
+                for(UserBean user : users)
+                {
+                    AuthenticationServer.addNewUser(user.getEmail(), user.getPassword());
+                }
+
+                Thread authHandler = new Thread(new AuthenticationHandler(clientSocket));
 
                 authHandler.start();
             }

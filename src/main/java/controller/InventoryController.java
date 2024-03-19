@@ -1,7 +1,6 @@
 package controller;
 
 import bean.Product;
-import bean.ProductBean;
 import bean.ProductRepository;
 import bean.UserBean;
 import authentcation.AuthenticationServer;
@@ -17,7 +16,7 @@ import java.util.List;
 
 public class InventoryController
 {
-    private InventoryView view;
+    private final InventoryView view;
 
     private volatile List<UserBean> users;
 
@@ -27,7 +26,7 @@ public class InventoryController
 
     static int count = 0;
 
-    List<Product> cart;
+    static volatile List<Product> cart;
 
     ProductRepository productRepository;
 
@@ -41,7 +40,7 @@ public class InventoryController
 
         this.socket = socket;
 
-        this.cart = new ArrayList<>();
+        cart = new ArrayList<>();
 
         this.productRepository = repository;
     }
@@ -120,8 +119,6 @@ public class InventoryController
                 if (newUser.emailExist(email, users))
                 {
                     view.displayMessage("User already exists. Please login");
-
-                    return;
                 }
                 else
                 {
@@ -129,13 +126,11 @@ public class InventoryController
 
                     AuthenticationServer.addNewUser(email, password);
 
+//                    AuthenticationServer.registeredUsers.put(email, password);
+
                     UserBean.saveUserData(users);
 
                     users = UserBean.loadUserData();
-
-                    AuthenticationServer server = new AuthenticationServer();
-
-                    server.initializeRegisteredUsers(users);
 
                     view.displayMessage("Signup successful!");
                 }
@@ -165,15 +160,13 @@ public class InventoryController
 
             BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 
-            AuthenticationServer server = new AuthenticationServer();
-
-            server.initializeRegisteredUsers(users);
-
             out.println(email);
 
             out.println(password);
 
             String authToken = in.readLine();
+
+            System.out.println(authToken);
 
             if (authToken.equals("Invalid credentials"))
             {
@@ -225,6 +218,8 @@ public class InventoryController
 
     private UserBean findUser(String email, String password)
     {
+        users=UserBean.loadUserData();
+
         for (UserBean user : users)
         {
             if (user.getEmail().equals(email))
@@ -648,24 +643,6 @@ public class InventoryController
         }
         return null;
     }
-
-//    private void addToCart()
-//    {
-//        int productId = view.getUserIntInput("Enter productId for cart: ");
-//
-//        ProductBean product = findProduct(productId);
-//
-//        if (product != null)
-//        {
-//            currentUser.cart.add(product);
-//
-//            view.displayMessage("Product added to cart!");
-//        }
-//        else
-//        {
-//            view.displayMessage("Invalid product ID!");
-//        }
-//    }
 
     private void removeFromCart()
     {

@@ -1,38 +1,31 @@
 package client;
 
 import java.io.IOException;
-import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.List;
 
-import bean.ProductBean;
 import bean.UserBean;
-import server.InventoryServer;
 
 public class ClientHandler
 {
-    static volatile List<ProductBean> products;
-
     volatile List<UserBean> users;
 
-    public ClientHandler(List<ProductBean> products, List<UserBean> users)
+    public ClientHandler(List<UserBean> users)
     {
         this.users = users;
-
-        this.products = products;
     }
 
     public static void main(String[] args)
     {
         try
         {
-            Socket socket = new Socket("127.0.0.1", 1428);
+            Socket socket = new Socket("10.20.40.229", 1428);
+
+            Socket authSocket = new Socket("10.20.40.229", 1429);
 
             List<UserBean> users = UserBean.loadUserData();
 
-            List<ProductBean> products = ProductBean.loadProductData();
-
-            InventoryClient client = new InventoryClient(socket, products, users);
+            InventoryClient client = new InventoryClient(socket, users);
 
             Thread clientThread = new Thread(client);
 

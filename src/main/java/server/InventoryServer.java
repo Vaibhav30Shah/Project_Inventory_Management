@@ -1,7 +1,6 @@
 package server;
 
 import authentcation.AuthenticationServer;
-import bean.ProductBean;
 import bean.ProductRepository;
 import bean.UserBean;
 import client.ClientHandler;
@@ -17,8 +16,6 @@ public class InventoryServer
 {
     private static final int PORT = 1428;
 
-    public static volatile List<ProductBean> products = new ArrayList<>();
-
     public static volatile List<UserBean> users = new ArrayList<>();
 
     private static volatile boolean shuttingDown = false;
@@ -33,8 +30,6 @@ public class InventoryServer
 //        InventoryView view = new InventoryView();
 //
         users = UserBean.loadUserData();
-
-        products = ProductBean.loadProductData();
 //
 //        if (users.isEmpty() || products.isEmpty())
 //        {
@@ -46,19 +41,11 @@ public class InventoryServer
 ////        productRepository = new ProductRepository();
 //        ProductBean.saveProductData(products);
 
-        AuthenticationServer authServer = new AuthenticationServer();
-
-        Thread authThread = new Thread(authServer);
-
-        authThread.start();
-
-//        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-//            if (!shuttingDown) {
-//                System.out.println("Server is writing");
-//                saveDataBeforeShutdown();
-//            }
-//            shuttingDown = true;
-//        }));
+//        AuthenticationServer authServer = new AuthenticationServer();
+//
+//        Thread authThread = new Thread(authServer);
+//
+//        authThread.start();
 
         try (ServerSocket serverSocket = new ServerSocket(PORT))
         {
@@ -70,13 +57,11 @@ public class InventoryServer
 
                 System.out.println("New client connected: " + clientSocket.getInetAddress().getHostName());
 
-                ClientHandler clientHandler = new ClientHandler(InventoryServer.products, InventoryServer.users);
+                ClientHandler clientHandler = new ClientHandler(InventoryServer.users);
 
                 InventoryView view=new InventoryView();
 
                 ProductRepository repository=new ProductRepository();
-
-                controller = new InventoryController(InventoryServer.users, view, clientSocket, repository);
 
                 Runtime.getRuntime().addShutdownHook(new Thread(() -> {
                     if (!shuttingDown) {
@@ -91,10 +76,6 @@ public class InventoryServer
                     }
                     shuttingDown = true;
                 }));
-
-                // new thread to handle the client
-//                Thread clientThread = new Thread(new InventoryClient(clientSocket, products, users));
-//                clientThread.start();
             }
         }
         catch (IOException e)
@@ -122,62 +103,26 @@ public class InventoryServer
 
 
         // Add dummy products
-        products.add(new ProductBean(100000, "iPhone"));
-
-        products.add(new ProductBean(55000, "LED TV"));
-
-        products.add(new ProductBean(5000, "Monitor"));
-
-        products.add(new ProductBean(400, "Mouse"));
-
-        products.add(new ProductBean(1000, "Keyboard"));
-
-        products.add(new ProductBean(100, "USB Cable"));
-
-        products.add(new ProductBean(17000, "Airpods"));
-
-        products.add(new ProductBean(1000, "Speaker"));
-
-        products.add(new ProductBean(60000, "HP Laptop"));
-
-        products.add(new ProductBean(4500, "Graphics Card"));
+//        products.add(new ProductBean(100000, "iPhone"));
+//
+//        products.add(new ProductBean(55000, "LED TV"));
+//
+//        products.add(new ProductBean(5000, "Monitor"));
+//
+//        products.add(new ProductBean(400, "Mouse"));
+//
+//        products.add(new ProductBean(1000, "Keyboard"));
+//
+//        products.add(new ProductBean(100, "USB Cable"));
+//
+//        products.add(new ProductBean(17000, "Airpods"));
+//
+//        products.add(new ProductBean(1000, "Speaker"));
+//
+//        products.add(new ProductBean(60000, "HP Laptop"));
+//
+//        products.add(new ProductBean(4500, "Graphics Card"));
     }
 
-    private static void saveDataBeforeShutdown()
-    {
-        UserBean.saveUserData(users);
-
-        ProductBean.saveProductData(products);
-    }
-
-    private static void saveUserData()
-    {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(UserBean.FILE_NAME)))
-        {
-            for (UserBean user : users)
-            {
-                writer.write(user.getFirstName() + "," + user.getEmail() + "," + user.getPassword() + "," + user.isAdmin() + "\n");
-            }
-        }
-        catch (IOException e)
-        {
-            e.printStackTrace();
-        }
-    }
-
-    private static void saveProductData()
-    {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(ProductBean.FILE_NAME)))
-        {
-            for (ProductBean product : products)
-            {
-                writer.write(product.getProductId() + "," + product.getProductName() + "," + product.getPrice() + "\n");
-            }
-        }
-        catch (IOException e)
-        {
-            e.printStackTrace();
-        }
-    }
 
 }

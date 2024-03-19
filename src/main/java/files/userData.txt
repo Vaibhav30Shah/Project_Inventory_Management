@@ -1,11 +1,3 @@
-Vaibhav,vaibhav@gmail.com,Vaibhav@123,false
-Ram,ram@gmail.com,Ram@123,false
-Shyam,shyam@gmail.com,Shyam@123,false
-Ravan,ravan@gmail.com,Ravan@123,false
-admin,admin@admin.com,admin,true
-Saahil Pandya,saahil@gmail.com,Saahil@123,false
-Shivam,shivam@gmail.com,Shivam@123,false
-ss,ss,ss,false
-adi,adi@gmail.com,Adi@12,false
-v,Vaibhav@123gm.co.in,Vaibhav@123,false
-v,vaibhavshah.20.cs@iite.indusuni.ac.in,Vaibhav@123,false
+dhyani,dhyani@gmail.com,Dhyani@123,false
+test,test@test.com,Test@123,false
+vansh,vansh@gmail.com,Vansh@123,false

@@ -1,35 +1,25 @@
 package authentcation;
 
-import bean.UserBean;
-import client.InventoryClient;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
-import java.util.List;
-import java.util.Map;
-import java.util.Scanner;
 
 public class AuthenticationHandler implements Runnable
 {
-    private Socket clientSocket;
+    private final Socket clientSocket;
 
-    private Map<String, String> registeredUsers;
 
-    public AuthenticationHandler(Socket clientSocket, Map<String, String> registeredUsers)
+    public AuthenticationHandler(Socket clientSocket)
     {
         this.clientSocket = clientSocket;
-
-        this.registeredUsers = registeredUsers;
     }
 
 
     @Override
     public void run()
     {
-        System.out.println("AH: "+registeredUsers);
         try
         {
             BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
@@ -42,7 +32,7 @@ public class AuthenticationHandler implements Runnable
 
             System.out.println("Server is trying to validate your credentials. Please Wait!!");
 
-            if (authenticate(email, password))
+            if (authenticate(email, password) )
             {
                 String authToken = generateAuthToken();
 
@@ -63,12 +53,12 @@ public class AuthenticationHandler implements Runnable
 
     private boolean authenticate(String email, String password)
     {
-        if (!registeredUsers.keySet().contains(email))
+        if (!AuthenticationServer.registeredUsers.containsKey(email))
         {
             return false;
         }
 
-        String registeredPassword = registeredUsers.get(email);
+        String registeredPassword = AuthenticationServer.registeredUsers.get(email);
 
         return registeredPassword != null && registeredPassword.equals(password);
     }

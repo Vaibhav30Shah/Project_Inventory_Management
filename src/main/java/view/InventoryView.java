@@ -1,10 +1,8 @@
 package view;
 
 import bean.Product;
-import bean.ProductBean;
 import bean.UserBean;
-import java.io.BufferedReader;
-import java.io.PrintWriter;
+
 import java.util.List;
 import java.util.Scanner;
 

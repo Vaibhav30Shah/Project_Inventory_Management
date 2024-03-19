@@ -13,8 +13,6 @@ public class UserBean
 
     private boolean isAdmin = false;
 
-    public ArrayList<ProductBean> cart = new ArrayList<>();
-
     public static String FILE_NAME = "src/main/java/files/userData.txt";
 
     public static String USER_HISTORY_FILE="src/main/java/files/userOrderHistory.txt";

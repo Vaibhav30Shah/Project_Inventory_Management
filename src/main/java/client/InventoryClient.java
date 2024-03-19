@@ -2,9 +2,7 @@ package client;
 
 import bean.ProductRepository;
 import controller.InventoryController;
-import bean.ProductBean;
 import bean.UserBean;
-import server.InventoryServer;
 import view.InventoryView;
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -25,7 +23,7 @@ public class InventoryClient implements Runnable
 
     InventoryView view;
 
-    public InventoryClient(Socket socket, List<ProductBean> products, List<UserBean> users)
+    public InventoryClient(Socket socket, List<UserBean> users)
     {
         this.clientSocket = socket;
 
