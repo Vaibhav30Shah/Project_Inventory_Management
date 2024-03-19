@@ -18,6 +18,7 @@ public class AuthenticationServer implements Runnable
     public AuthenticationServer()
     {
         List<UserBean> users=UserBean.loadUserData();
+
         initializeRegisteredUsers(users);
     }
 

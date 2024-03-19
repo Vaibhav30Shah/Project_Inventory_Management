@@ -7,23 +7,19 @@ import bean.UserBean;
 import authentcation.AuthenticationServer;
 import categories.*;
 import view.InventoryView;
+import view.Validator;
 
 import java.io.*;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Scanner;
 
 public class InventoryController
 {
     private InventoryView view;
 
-    private Scanner scanner = new Scanner(System.in);
-
     private volatile List<UserBean> users;
-
-    private volatile List<ProductBean> products;
 
     private UserBean currentUser;
 
@@ -35,12 +31,10 @@ public class InventoryController
 
     ProductRepository productRepository;
 
-    public static String USER_ORDER_HISTORY_FILE="src/main/java/files/userOrderHistory.txt";
+    public static String USER_ORDER_HISTORY_FILE = "src/main/java/files/userOrderHistory.txt";
 
-    public InventoryController(List<ProductBean> products, List<UserBean> users, InventoryView view, Socket socket, ProductRepository repository)
+    public InventoryController(List<UserBean> users, InventoryView view, Socket socket, ProductRepository repository)
     {
-        this.products = products;
-
         this.users = users;
 
         this.view = view;
@@ -69,6 +63,13 @@ public class InventoryController
 
     private void handleUserChoice(int choice)
     {
+        if (!isServerRunning())
+        {
+            view.displayMessage("Server is down. Please try again later.");
+
+            return;
+        }
+
         switch (choice)
         {
             case 1:
@@ -102,35 +103,51 @@ public class InventoryController
 
     private void signup()
     {
-        String firstName = view.getUserInput("Enter first name: ");
-
-        String email = view.getUserInput("Enter email: ");
-
-        String password = view.getUserInput("Enter password: ");
-
-        UserBean newUser = new UserBean(firstName, email, password);
-
-        if (newUser.emailExist(email, users))
+        try
         {
-            view.displayMessage("User already exists. Please login");
+            String firstName = view.getUserInput("Enter first name: ");
 
-            return;
+            String email = view.getUserInput("Enter email: ");
+
+            String password = view.getUserInput("Enter password: ");
+
+            if (Validator.isValidEmail(email) && Validator.isValidPassword(password))
+            {
+                Socket socket = new Socket("localhost", 1429); // Connect to the AuthenticationServer
+
+                UserBean newUser = new UserBean(firstName, email, password);
+
+                if (newUser.emailExist(email, users))
+                {
+                    view.displayMessage("User already exists. Please login");
+
+                    return;
+                }
+                else
+                {
+                    users.add(newUser);
+
+                    AuthenticationServer.addNewUser(email, password);
+
+                    UserBean.saveUserData(users);
+
+                    users = UserBean.loadUserData();
+
+                    AuthenticationServer server = new AuthenticationServer();
+
+                    server.initializeRegisteredUsers(users);
+
+                    view.displayMessage("Signup successful!");
+                }
+            }
+            else
+            {
+                view.displayMessage("Email or Password is wrong");
+            }
         }
-        else
+        catch (IOException e)
         {
-            users.add(newUser);
-
-            AuthenticationServer.addNewUser(email, password);
-
-            UserBean.saveUserData(users);
-
-            users = UserBean.loadUserData();
-
-            AuthenticationServer server = new AuthenticationServer();
-
-            server.initializeRegisteredUsers(users);
-
-            view.displayMessage("Signup successful!");
+            view.displayMessage("Server is down.");
         }
     }
 
@@ -172,7 +189,7 @@ public class InventoryController
                 {
                     count = 0;
 
-                    view.displayMessage("Login successful! Welcome "+currentUser.getFirstName());
+                    view.displayMessage("Login successful! Welcome " + currentUser.getFirstName());
 
                     if (currentUser.isAdmin())
                     {
@@ -218,7 +235,6 @@ public class InventoryController
                 }
                 else if (user.isAdmin() && password.equals("admin"))
                 {
-                    // Handle the case where the admin user's password is "admin"
                     return user;
                 }
             }
@@ -238,39 +254,49 @@ public class InventoryController
 
             int choice = view.getUserIntInput("Enter your choice: ");
 
-            switch (choice)
+            try
             {
-                case 0:
-                    view.displayMessage("Thank you for visiting us...");
-                    repeat = false;
-                    break;
+                Socket socket = new Socket("localhost", 1429);
 
-                case 1:
-                    addProduct();
-                    break;
+                switch (choice)
+                {
+                    case 0:
+                        view.displayMessage("Thank you for visiting us...");
+                        repeat = false;
+                        break;
 
-                case 2:
-                    viewProductsByCategory();
-                    break;
+                    case 1:
+                        addProduct();
+                        break;
 
-                case 3:
-                    view.displayUsers(users);
-                    break;
+                    case 2:
+                        viewProductsByCategory();
+                        break;
 
-                case 4:
-                    updateProduct();
-                    break;
+                    case 3:
+                        view.displayUsers(users);
+                        break;
 
-                case 5:
-                    adminViewUserOrderHistory();
-                    break;
+                    case 4:
+                        updateProduct();
+                        break;
 
-                case 6:
-                    removeProduct();
-                    break;
+                    case 5:
+                        adminViewUserOrderHistory();
+                        break;
 
-                default:
-                    view.displayMessage("Invalid choice");
+                    case 6:
+                        removeProduct();
+                        break;
+
+                    default:
+                        view.displayMessage("Invalid choice");
+                }
+                socket.close();
+            }
+            catch (IOException e)
+            {
+                view.displayMessage("Server is down.");
             }
         }
     }
@@ -278,26 +304,27 @@ public class InventoryController
     private Product createProductInstance(int category, String productName, int productPrice)
     {
         String productId;
+
         switch (category)
         {
             case 1:
-                productId="E"+(int) (Math.random() * 10000);
+                productId = "E" + (int) (Math.random() * 10000);
                 return new ElectronicsProduct(productId, productName, productPrice);
 
             case 2:
-                productId="C"+(int) (Math.random() * 10000);
+                productId = "C" + (int) (Math.random() * 10000);
                 return new ClothingProduct(productId, productName, productPrice);
 
             case 3:
-                productId="FH"+(int) (Math.random() * 10000);
+                productId = "FH" + (int) (Math.random() * 10000);
                 return new HomeDecorAndFurniture(productId, productName, productPrice);
 
             case 4:
-                productId="B"+(int) (Math.random() * 10000);
+                productId = "B" + (int) (Math.random() * 10000);
                 return new Books(productId, productName, productPrice);
 
             case 5:
-                productId="SFB"+(int) (Math.random() * 10000);
+                productId = "SFB" + (int) (Math.random() * 10000);
                 return new SportsFitnessBagsLuggage(productId, productName, productPrice);
 
             default:
@@ -308,85 +335,157 @@ public class InventoryController
 
     private void addProduct()
     {
-        int category = view.getUserIntInput("Enter category: \n1. Electronics \n2. Clothing \n3. Furniture and Home Decor" +
-                "\n4. Books \n5. Sports, Fitness, Bags and Luggage");
+        try
+        {
+            Socket serverCheckObject = new Socket("localhost", 1429);
 
-        String productName = view.getUserInput("Enter product name: ");
+            int category = view.getUserIntInput("Enter category: \n1. Electronics \n2. Clothing \n3. Furniture and Home Decor" +
+                    "\n4. Books \n5. Sports, Fitness, Bags and Luggage");
 
-        int productPrice = view.getUserIntInput("Enter product price: ");
+            if (category == 1 || category == 2 || category == 3 || category == 4 || category == 5)
+            {
+                String productName = view.getUserInput("Enter product name: ");
 
+                while (productName == "")
+                {
+                    view.displayMessage("Enter product name please!");
+
+                    productName = view.getUserInput("Enter product name: ");
+                }
+
+                int productPrice = view.getUserIntInput("Enter product price: ");
+
+                while (productPrice <= 0)
+                {
+                    view.displayMessage("Please enter valid price");
+
+                    productPrice = view.getUserIntInput("Enter product price: ");
+                }
 //        String productId=null;
 
-        Product product = createProductInstance(category, productName, productPrice);
+                Product product = createProductInstance(category, productName, productPrice);
 
-        List<Product> products = productRepository.getProducts(category);
+                List<Product> products = productRepository.getProducts(category);
 
-        products.add(product);
+                products.add(product);
 
-        productRepository.saveProducts(category, products);
+                productRepository.saveProducts(category, products);
 
-        view.displayMessage("Product added successfully!");
+                view.displayMessage("Product added successfully!");
+
+                serverCheckObject.close();
+            }
+            else
+            {
+                view.displayMessage("Invalid Product category");
+
+                addProduct();
+            }
+        }
+        catch (IOException e)
+        {
+            view.displayMessage("Server is Down");
+        }
     }
 
     private void updateProduct()
     {
-        int category = view.getUserIntInput("Enter category: \n1. Electronics \n2. Clothing \n3. Furniture and Home Decor" +
-                "\n4. Books \n5. Sports, Fitness, Bags and Luggage");
-
-        String productId = view.getUserInput("Enter product ID to update: ");
-
-        List<Product> products = productRepository.getProducts(category);
-
-        Product product = findProduct(products, productId);
-
-        if (product != null)
+        try
         {
-            String newName = view.getUserInput("Enter new product name (leave blank to keep current): ");
+            Socket serverCheckObject = new Socket("localhost", 1429);
 
-            if (!newName.isBlank())
+            int category = view.getUserIntInput("Enter category: \n1. Electronics \n2. Clothing \n3. Furniture and Home Decor" +
+                    "\n4. Books \n5. Sports, Fitness, Bags and Luggage");
+
+            String productId = view.getUserInput("Enter product ID to update: ");
+
+            List<Product> products = productRepository.getProducts(category);
+
+            Product product = findProduct(products, productId);
+
+            if (product != null)
             {
-                product.setProductname(newName);
+                String newName = view.getUserInput("Enter new product name (leave blank to keep current): ");
+
+                if (!newName.isBlank())
+                {
+                    product.setProductname(newName);
+                }
+
+                int newPrice = view.getUserIntInput("Enter new product price (0 to keep current): ");
+
+                if (newPrice != 0)
+                {
+                    while (newPrice < 0)
+                    {
+                        view.displayMessage("Price can't be negative");
+
+                        newPrice = view.getUserIntInput("Enter new product price (0 to keep current): ");
+                    }
+
+                    product.setProductPrice(newPrice);
+
+                }
+
+                productRepository.saveProducts(category, products);
+
+                view.displayMessage("Product details updated successfully!");
+            }
+            else
+            {
+                view.displayMessage("Invalid product ID!");
             }
 
-            int newPrice = view.getUserIntInput("Enter new product price (0 to keep current): ");
-
-            if (newPrice != 0)
-            {
-                product.setProductPrice(newPrice);
-            }
-
-            productRepository.saveProducts(category, products);
-
-            view.displayMessage("Product details updated successfully!");
+            serverCheckObject.close();
         }
-        else
+        catch (IOException e)
         {
-            view.displayMessage("Invalid product ID!");
+            view.displayMessage("Server is down");
         }
     }
 
     private void removeProduct()
     {
-        int category = view.getUserIntInput("Enter category: \n1. Electronics \n2. Clothing \n3. Furniture and Home Decor" +
-                "\n4. Books \n5. Sports, Fitness, Bags and Luggage");
-
-        String productId = view.getUserInput("Enter product ID to remove: ");
-
-        List<Product> products = productRepository.getProducts(category);
-
-        Product product = findProduct(products, productId);
-
-        if (product != null)
+        try
         {
-            products.remove(product);
+            Socket serverCheckObject = new Socket("localhost", 1429);
 
-            productRepository.saveProducts(category, products);
+            int category = view.getUserIntInput("Enter category: \n1. Electronics \n2. Clothing \n3. Furniture and Home Decor" +
+                    "\n4. Books \n5. Sports, Fitness, Bags and Luggage");
 
-            view.displayMessage("Product removed successfully!");
+            if (category == 1 || category == 2 || category == 3 || category == 4 || category == 5)
+            {
+                String productId = view.getUserInput("Enter product ID to remove: ");
+
+                List<Product> products = productRepository.getProducts(category);
+
+                Product product = findProduct(products, productId);
+
+                if (product != null)
+                {
+                    products.remove(product);
+
+                    productRepository.saveProducts(category, products);
+
+                    view.displayMessage("Product removed successfully!");
+                }
+                else
+                {
+                    view.displayMessage("Invalid product ID!");
+                }
+
+                serverCheckObject.close();
+            }
+            else
+            {
+                view.displayMessage("Invalid Product Category");
+
+                removeProduct();
+            }
         }
-        else
+        catch (IOException e)
         {
-            view.displayMessage("Invalid product ID!");
+            view.displayMessage("Server is down");
         }
     }
 
@@ -400,36 +499,55 @@ public class InventoryController
 
             int choice = view.getUserIntInput("Enter your choice: ");
 
-            switch (choice)
+            if (socket.isConnected() && socket.isBound())
             {
-                case 0:
-                    view.displayMessage("Thank you.....");
-                    repeat = false;
-                    break;
+                try
+                {
+                    Socket serverCheckObject = new Socket("localhost", 1429);
 
-                case 1:
-                    viewProductsByCategory();
+                    switch (choice)
+                    {
+                        case 0:
+                            view.displayMessage("Thank you.....");
+                            repeat = false;
+                            break;
+
+                        case 1:
+                            viewProductsByCategory();
 //                    view.displayProducts(products);
-                    break;
+                            break;
 
-                case 2:
-                    addToCart();
-                    break;
+                        case 2:
+//                        new Socket("localhost", 1429);
+                            addToCart();
+                            break;
 
-                case 3:
-                    removeFromCart();
-                    break;
+                        case 3:
+//                        new Socket("localhost", 1429);
+                            removeFromCart();
+                            break;
 
-                case 4:
-                    viewCart();
-                    break;
+                        case 4:
+                            viewCart();
+                            break;
 
-                case 5:
-                    viewUserOrderHistory();
-                    break;
+                        case 5:
+                            viewUserOrderHistory();
+                            break;
 
-                default:
-                    view.displayMessage("Invalid choice");
+                        default:
+                            view.displayMessage("Invalid choice");
+                    }
+                    serverCheckObject.close();
+                }
+                catch (IOException e)
+                {
+                    view.displayMessage("Serves is down");
+                }
+            }
+            else
+            {
+                view.displayMessage("Server is down");
             }
         }
     }
@@ -439,44 +557,74 @@ public class InventoryController
         int category = view.getUserIntInput("Enter category: \n1. Electronics \n2. Clothing \n3. Furniture and Home Decor" +
                 "\n4. Books \n5. Sports, Fitness, Bags and Luggage");
 
-        List<Product> products = productRepository.getProducts(category);
+        if (category == 1 || category == 2 || category == 3 || category == 4 || category == 5)
+        {
+            List<Product> products = productRepository.getProducts(category);
 
-        view.displayProducts(products);
+            view.displayProducts(products);
+        }
+        else
+        {
+            view.displayMessage("Invalid Product category");
+
+            viewProductsByCategory();
+        }
     }
 
     private void addToCart()
     {
-        int category = view.getUserIntInput("Enter category: \n1. Electronics \n2. Clothing \n3. Furniture and Home Decor" +
-                "\n4. Books \n5. Sports, Fitness, Bags and Luggage");
-
-        String productId = view.getUserInput("Enter product ID: ");
-
-        int quantity=getProductQuantity();
-
-        List<Product> products = productRepository.getProducts(category);
-
-        Product product = findProduct(products, productId);
-
-        if (product != null)
+        try
         {
-            product.setQuantity(quantity);
+            int category = view.getUserIntInput("Enter category: \n1. Electronics \n2. Clothing \n3. Furniture and Home Decor" +
+                    "\n4. Books \n5. Sports, Fitness, Bags and Luggage");
 
-            product.setProductPrice(product.getProductPrice() * quantity);
+            if (category == 1 || category == 2 || category == 3 || category == 4 || category == 5)
+            {
+                String productId = view.getUserInput("Enter product ID: ");
 
-            cart.add(product);
+                Socket serverCheckObject = new Socket("localhost", 1429);
 
-            view.displayMessage("Product added to cart!");
+                int quantity = getProductQuantity();
+
+                List<Product> products = productRepository.getProducts(category);
+
+                Product product = findProduct(products, productId);
+
+                if (product != null)
+                {
+                    product.setQuantity(quantity);
+
+                    product.setProductPrice(product.getProductPrice() * quantity);
+
+                    cart.add(product);
+
+                    view.displayMessage("Product added to cart!");
+                }
+                else
+                {
+                    view.displayMessage("Invalid product ID!");
+                }
+
+                serverCheckObject.close();
+            }
+            else
+            {
+                view.displayMessage("Invalid Product category");
+
+                addToCart();
+            }
         }
-        else
+        catch (IOException e)
         {
-            view.displayMessage("Invalid product ID!");
+            view.displayMessage("Server is Down");
         }
     }
 
-    private int getProductQuantity(){
+    private int getProductQuantity()
+    {
         int quantity = view.getUserIntInput("Enter quantity: ");
 
-        if(quantity>0)
+        if (quantity > 0)
         {
             return quantity;
         }
@@ -523,73 +671,74 @@ public class InventoryController
     {
         String productId = view.getUserInput("Enter productId: ");
 
-        int category=0;
+        int category = 0;
 
-        switch(productId.charAt(0)){
-            case 'E':
-                category=1;
-                break;
-
-            case 'C':
-                category=2;
-                break;
-
-            case 'F':
-                category=3;
-                break;
-
-            case 'B':
-                category=4;
-                break;
-
-            case 'S':
-                category=5;
-                break;
-        }
-        List<Product> products = productRepository.getProducts(category);
-
-        Product product = findProduct(products, productId);
-
-        if (product != null)
+        try
         {
-            if (cart.removeIf(currentProduct -> currentProduct.getProductId().equals(productId)))
-            {
-                cart.remove(product);
+            Socket serverCheckObject = new Socket("localhost", 1429);
 
-                view.displayMessage("Product removed from cart!");
+            switch (productId.charAt(0))
+            {
+                case 'E':
+                    category = 1;
+                    break;
+
+                case 'C':
+                    category = 2;
+                    break;
+
+                case 'F':
+                    category = 3;
+                    break;
+
+                case 'B':
+                    category = 4;
+                    break;
+
+                case 'S':
+                    category = 5;
+                    break;
+            }
+
+            List<Product> products = productRepository.getProducts(category);
+
+            Product product = findProduct(products, productId);
+
+            if (product != null)
+            {
+                if (cart.removeIf(currentProduct -> currentProduct.getProductId().equals(productId)))
+                {
+                    cart.remove(product);
+
+                    view.displayMessage("Product removed from cart!");
+                }
+                else
+                {
+                    view.displayMessage("Product not added in Cart!");
+                }
             }
             else
             {
-                view.displayMessage("Product not added in Cart!");
+                view.displayMessage("Invalid product ID!");
             }
-        }
-        else
-        {
-            view.displayMessage("Invalid product ID!");
-        }
-    }
 
-    private ProductBean findProduct(int productId)
-    {
-        for (ProductBean product : products)
-        {
-            if (product.getProductId() == productId)
-            {
-                return product;
-            }
+            socket.close();
         }
-        return null;
+        catch (IOException e)
+        {
+            view.displayMessage("Server is down");
+        }
     }
 
     private void viewCart()
     {
         int price = 0;
 
-        float cgst=0.125f;
+        float cgst = 0.125f;
 
-        float sgst=0.125f;
+        float sgst = 0.125f;
 
-        double grand_total=0;
+        double grand_total = 0;
 
         view.displayMessage("Cart Items:");
 
@@ -597,35 +746,54 @@ public class InventoryController
 
         for (Product product : cart)
         {
-            view.displayMessage(product.getProductId() + "\t" + product.getProductName() + "\t" + product.getQuantity()+ "\t" + (product.getProductPrice()*product.getQuantity()));
+            view.displayMessage(product.getProductId() + "\t" + product.getProductName() + "\t" + product.getQuantity() + "\t" + (product.getProductPrice() * product.getQuantity()));
 
-            price += (product.getProductPrice()*product.getQuantity());
+            price += (product.getProductPrice() * product.getQuantity());
 
             orderedProducts.add(product);
         }
 
-        view.displayMessage("Total bill: " + price);
-
-        view.displayMessage("CGST(12.5%): "+(price*cgst));
-
-        view.displayMessage("SGST(12.5%): "+(price*sgst));
-
-        grand_total=price+(price*cgst)+(price*sgst);
-
-        view.displayMessage("Grand Total: "+grand_total);
-
         if (price > 0)
         {
-            boolean wantToCheckout = view.getUserBooleanInput("Do you want to checkout? (y/n): ");
 
-            if (wantToCheckout)
+            view.displayMessage("Total bill: " + price);
+
+            view.displayMessage("CGST(12.5%): " + (price * cgst));
+
+            view.displayMessage("SGST(12.5%): " + (price * sgst));
+
+            grand_total = price + (price * cgst) + (price * sgst);
+
+            view.displayMessage("Grand Total: " + grand_total);
+
+            try
             {
-                currentUser.saveOrderHistory(orderedProducts);
+                Socket serverCheckObject = new Socket("localhost", 1429);
 
-                cart.clear();
+                if (price > 0)
+                {
+                    boolean wantToCheckout = view.getUserBooleanInput("Do you want to checkout? (y/n): ");
 
-                view.displayMessage("Order placed successfully!");
+                    if (wantToCheckout)
+                    {
+                        currentUser.saveOrderHistory(orderedProducts);
+
+                        cart.clear();
+
+                        view.displayMessage("Order placed successfully!");
+                    }
+                }
+
+                serverCheckObject.close();
             }
+            catch (IOException e)
+            {
+                view.displayMessage("Server is down");
+            }
+        }
+        else
+        {
+            view.displayMessage("Cart is empty");
         }
     }
 
@@ -715,5 +883,10 @@ public class InventoryController
         {
             e.printStackTrace();
         }
+    }
+
+    private boolean isServerRunning()
+    {
+        return socket.isConnected() && !socket.isClosed();
     }
 }

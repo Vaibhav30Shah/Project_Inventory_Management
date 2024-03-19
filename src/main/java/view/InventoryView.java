@@ -12,14 +12,11 @@ public class InventoryView
 {
     private Scanner scanner = new Scanner(System.in);
 
-    private BufferedReader in;
-
-    private PrintWriter out;
-
     String SINGLE_TAB="\t";
+
     String DOUBLE_TAB = "\t\t";
 
-    String MULTI_TAB="\t\t\t\t\t";
+    String MULTI_TAB="\t\t\t\t";
 
 
     public void displayMenu()
@@ -31,7 +28,7 @@ public class InventoryView
     {
         System.out.println("*********** Product List ******************");
 
-        System.out.println("ProductId"+SINGLE_TAB+" ---- Name"+MULTI_TAB+"---- Price");
+        System.out.println("ProductId"+SINGLE_TAB+"Name"+MULTI_TAB+"Price");
 
         for (Product product : products)
         {
@@ -51,7 +48,12 @@ public class InventoryView
     {
         System.out.println(prompt);
 
-        return scanner.nextLine();
+        String result= scanner.nextLine();
+
+        if(result==null){
+            return "Can't be null";
+        }
+        return result;
     }
 
     public int getUserIntInput(String prompt)

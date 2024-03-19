@@ -5,6 +5,7 @@ import bean.ProductBean;
 import bean.ProductRepository;
 import bean.UserBean;
 import client.ClientHandler;
+import controller.InventoryController;
 import view.InventoryView;
 
 import java.net.*;
@@ -16,11 +17,13 @@ public class InventoryServer
 {
     private static final int PORT = 1428;
 
-    private static volatile List<ProductBean> products = new ArrayList<>();
+    public static volatile List<ProductBean> products = new ArrayList<>();
 
-    private static List<UserBean> users = new ArrayList<>();
+    public static volatile List<UserBean> users = new ArrayList<>();
 
     private static volatile boolean shuttingDown = false;
+
+    static InventoryController controller;
 
 
     public static void main(String[] args)
@@ -29,9 +32,9 @@ public class InventoryServer
 //
 //        InventoryView view = new InventoryView();
 //
-//        users = UserBean.loadUserData();
-//
-//        products = ProductBean.loadProductData();
+        users = UserBean.loadUserData();
+
+        products = ProductBean.loadProductData();
 //
 //        if (users.isEmpty() || products.isEmpty())
 //        {
@@ -67,7 +70,13 @@ public class InventoryServer
 
                 System.out.println("New client connected: " + clientSocket.getInetAddress().getHostName());
 
-                ClientHandler clientHandler = new ClientHandler(products, users);
+                ClientHandler clientHandler = new ClientHandler(InventoryServer.products, InventoryServer.users);
+
+                InventoryView view=new InventoryView();
+
+                ProductRepository repository=new ProductRepository();
+
+                controller = new InventoryController(InventoryServer.users, view, clientSocket, repository);
 
                 Runtime.getRuntime().addShutdownHook(new Thread(() -> {
                     if (!shuttingDown) {

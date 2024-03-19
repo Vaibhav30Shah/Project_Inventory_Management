@@ -4,6 +4,7 @@ import bean.ProductRepository;
 import controller.InventoryController;
 import bean.ProductBean;
 import bean.UserBean;
+import server.InventoryServer;
 import view.InventoryView;
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -18,15 +19,15 @@ public class InventoryClient implements Runnable
 
     private static InventoryController controller;
 
-    List<ProductBean> products;
+    volatile List<UserBean> users;
 
-    List<UserBean> users;
+    private boolean isServerRunning = true;
+
+    InventoryView view;
 
     public InventoryClient(Socket socket, List<ProductBean> products, List<UserBean> users)
     {
         this.clientSocket = socket;
-
-        this.products = products;
 
         this.users = users;
     }
@@ -40,11 +41,11 @@ public class InventoryClient implements Runnable
 
             PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
 
-            InventoryView view = new InventoryView();
+            view = new InventoryView();
 
             ProductRepository repository=new ProductRepository();
 
-            controller = new InventoryController(products, users, view, clientSocket, repository);
+            controller = new InventoryController(users, view, clientSocket, repository);
 
             controller.start();
 
@@ -52,6 +53,10 @@ public class InventoryClient implements Runnable
         }
         catch (IOException e)
         {
+            isServerRunning = false;
+
+            view.displayMessage("Server is down. Please try again later.");
+
             e.printStackTrace();
         }
     }

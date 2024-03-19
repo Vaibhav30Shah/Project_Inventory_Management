@@ -1,17 +1,19 @@
 package client;
 
 import java.io.IOException;
+import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.List;
 
 import bean.ProductBean;
 import bean.UserBean;
+import server.InventoryServer;
 
 public class ClientHandler
 {
-    static List<ProductBean> products;
+    static volatile List<ProductBean> products;
 
-    List<UserBean> users;
+    volatile List<UserBean> users;
 
     public ClientHandler(List<ProductBean> products, List<UserBean> users)
     {

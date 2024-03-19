@@ -18,8 +18,6 @@ public class AuthenticationHandler implements Runnable
 
     private Map<String, String> registeredUsers;
 
-    Scanner scanner = new Scanner(System.in);
-
     public AuthenticationHandler(Socket clientSocket, Map<String, String> registeredUsers)
     {
         this.clientSocket = clientSocket;

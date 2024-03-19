@@ -10,3 +10,5 @@ E9369,HP Pavilion x360,77490,0
 E9975,Apple 2023 MacBook Pro,199990,0
 E8265,Apple MacBook Air,74990,0
 E9737,Apple MacBook Pro 16-inch M3 Pro Chip,249990,0
+E5160,,100,0
+E8560,w,9,0
